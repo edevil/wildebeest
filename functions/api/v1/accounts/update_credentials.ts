@@ -1,5 +1,6 @@
 // https://docs.joinmastodon.org/methods/accounts/#update_credentials
 
+import type { Queue, DeliverMessageBody } from 'wildebeest/backend/src/types/queue'
 import * as errors from 'wildebeest/backend/src/errors'
 import { getSigningKey } from 'wildebeest/backend/src/mastodon/account'
 import * as activities from 'wildebeest/backend/src/activitypub/activities/update'
@@ -31,7 +32,8 @@ export async function handleRequest(
 	accountId: string,
 	apiToken: string,
 
-	userKEK: string
+	userKEK: string,
+	queue: Queue<DeliverMessageBody>
 ): Promise<Response> {
 	if (!connectedActor) {
 		return new Response('', { status: 401 })
@@ -106,8 +108,7 @@ export async function handleRequest(
 
 		// send updates
 		const activity = activities.create(domain, connectedActor, actor)
-		const signingKey = await getSigningKey(userKEK, db, connectedActor)
-		await deliverFollowers(db, signingKey, connectedActor, activity)
+		await deliverFollowers(db, userKEK, connectedActor, activity, queue)
 
 		return new Response(JSON.stringify(res), { headers })
 	}

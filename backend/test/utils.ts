@@ -1,4 +1,5 @@
 import { strict as assert } from 'node:assert/strict'
+import type { Queue } from 'wildebeest/backend/src/types/queue'
 import { createClient } from 'wildebeest/backend/src/mastodon/client'
 import type { Client } from 'wildebeest/backend/src/mastodon/client'
 import { promises as fs } from 'fs'
@@ -63,4 +64,23 @@ export async function createTestClient(
 	scopes: string = 'read follow'
 ): Promise<Client> {
 	return createClient(db, 'test client', redirectUri, 'https://cloudflare.com', scopes)
+}
+
+type TestQueue = Queue<any> & { messages: Array<any> }
+
+export function makeQueue(): TestQueue {
+	let messages: Array<any> = []
+
+	return {
+		messages,
+
+		async send(msg: any) {
+			messages.push(msg)
+		},
+
+		async sendBatch(batch: Array<any>) {
+			const msg = batch.map((m) => m.body)
+			messages.push(...msg)
+		},
+	}
 }

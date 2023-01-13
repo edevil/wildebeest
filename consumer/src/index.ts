@@ -1,4 +1,4 @@
-import type { MessageBody } from 'wildebeest/backend/src/types/queue'
+import type { MessageBody, ActivityMessageBody } from 'wildebeest/backend/src/types/queue'
 import type { JWK } from 'wildebeest/backend/src/webpush/jwk'
 import type { Actor } from 'wildebeest/backend/src/activitypub/actors'
 import * as actors from 'wildebeest/backend/src/activitypub/actors'
@@ -6,6 +6,7 @@ import * as timeline from 'wildebeest/backend/src/mastodon/timeline'
 import * as notification from 'wildebeest/backend/src/mastodon/notification'
 import * as activityHandler from 'wildebeest/backend/src/activitypub/activities/handle'
 import type { Activity } from 'wildebeest/backend/src/activitypub/activities'
+import { MessageType } from 'wildebeest/backend/src/types/queue'
 
 type Env = {
 	DATABASE: D1Database
@@ -25,8 +26,8 @@ export default {
 				}
 
 				switch (message.body.type) {
-					case 'activity': {
-						await handleActivityMessage(env, actor, message.body)
+					case MessageType.Inbox: {
+						await handleActivityMessage(env, actor, message.body as ActivityMessageBody)
 						break
 					}
 					default:
@@ -40,12 +41,12 @@ export default {
 	},
 }
 
-async function handleActivityMessage(env: Env, actor: Actor, message: MessageBody) {
+async function handleActivityMessage(env: Env, actor: Actor, message: ActivityMessageBody) {
 	const domain = env.DOMAIN
 	const db = env.DATABASE
 	const adminEmail = env.ADMIN_EMAIL
 	const cache = env.KV_CACHE
-	const activity = message.content
+	const activity = message.activity
 
 	await activityHandler.handle(domain, activity, db, message.userKEK, adminEmail, message.vapidKeys)
 

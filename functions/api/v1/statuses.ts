@@ -40,6 +40,7 @@ export async function handleRequest(
 	}
 	const contentType = request.headers.get('content-type')
 	console.log({ contentType })
+	console.log(request.text())
 
 	const body = await readBody<StatusCreate>(request)
 	console.log(body)
